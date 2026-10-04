@@ -1,5 +1,14 @@
-import { useEffect } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import './App.css'
+import AdminPage from './AdminPage'
+import ReservationCalendar from './ReservationCalendar'
+import {
+  cancelReservation,
+  createReservation,
+  getAvailableSlots,
+  type ReservationArea,
+} from './reservations'
+import { isSupabaseConfigured } from './supabase'
 
 type Specialty = {
   title: string
@@ -90,7 +99,231 @@ const openingHours = [
   { day: 'Saison', time: 'Mitte Januar bis Mitte Dezember' },
 ]
 
+const cafeTimes = ['12:00', '13:00', '14:00', '15:00', '16:00', '17:00']
+const testReservationEndpoint =
+  'https://formsubmit.co/ajax/hansbrandt6@web.de'
+
+type SubmissionStatus =
+  | 'idle'
+  | 'submitting'
+  | 'activation'
+  | 'success'
+  | 'error'
+type AvailabilityStatus = 'idle' | 'loading' | 'success' | 'error'
+type CancellationStatus = 'idle' | 'submitting' | 'success' | 'error'
+
+function getCancellationRequest() {
+  const [section, query = ''] = window.location.hash.slice(1).split('?')
+
+  if (section !== 'stornieren') {
+    return null
+  }
+
+  const parameters = new URLSearchParams(query)
+  const reservationId = parameters.get('id')
+  const token = parameters.get('token')
+
+  return reservationId && token ? { reservationId, token } : null
+}
+
 function App() {
+  const [reservationLocation, setReservationLocation] =
+    useState<ReservationArea>('inside')
+  const [selectedDate, setSelectedDate] = useState('')
+  const [selectedTime, setSelectedTime] = useState('')
+  const [guestCount, setGuestCount] = useState('')
+  const [availableTimes, setAvailableTimes] = useState<string[]>([])
+  const [availabilityStatus, setAvailabilityStatus] =
+    useState<AvailabilityStatus>('idle')
+  const [submissionStatus, setSubmissionStatus] =
+    useState<SubmissionStatus>('idle')
+  const [submissionMessage, setSubmissionMessage] = useState('')
+  const [reservationReference, setReservationReference] = useState('')
+  const [cancellationRequest] = useState(getCancellationRequest)
+  const [cancellationStatus, setCancellationStatus] =
+    useState<CancellationStatus>('idle')
+
+  if (window.location.hash.startsWith('#verwaltung')) {
+    return <AdminPage />
+  }
+
+  async function handleCancellation() {
+    if (!cancellationRequest) {
+      return
+    }
+
+    setCancellationStatus('submitting')
+
+    try {
+      const wasCancelled = await cancelReservation(
+        cancellationRequest.reservationId,
+        cancellationRequest.token,
+      )
+      setCancellationStatus(wasCancelled ? 'success' : 'error')
+    } catch {
+      setCancellationStatus('error')
+    }
+  }
+
+  useEffect(() => {
+    const guests = Number.parseInt(guestCount, 10)
+
+    if (
+      !isSupabaseConfigured
+      || !selectedDate
+      || !Number.isInteger(guests)
+      || guests < 1
+    ) {
+      setAvailableTimes([])
+      setAvailabilityStatus('idle')
+      return
+    }
+
+    let isCurrentRequest = true
+    setAvailabilityStatus('loading')
+
+    getAvailableSlots(selectedDate, reservationLocation, guests)
+      .then((slots) => {
+        if (!isCurrentRequest) {
+          return
+        }
+
+        const freeTimes = slots
+          .filter((slot) => slot.available)
+          .map((slot) => slot.time)
+
+        setAvailableTimes(freeTimes)
+        setSelectedTime((currentTime) =>
+          freeTimes.includes(currentTime) ? currentTime : '',
+        )
+        setAvailabilityStatus('success')
+      })
+      .catch(() => {
+        if (!isCurrentRequest) {
+          return
+        }
+
+        setAvailableTimes([])
+        setSelectedTime('')
+        setAvailabilityStatus('error')
+      })
+
+    return () => {
+      isCurrentRequest = false
+    }
+  }, [guestCount, reservationLocation, selectedDate])
+
+  async function handleReservationSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    const form = event.currentTarget
+    const formData = Object.fromEntries(new FormData(form))
+    const isTestMode = import.meta.env.DEV
+    const endpoint = isTestMode
+      ? testReservationEndpoint
+      : '/api/reservation.php'
+    setSubmissionStatus('submitting')
+    setSubmissionMessage('')
+    setReservationReference('')
+
+    try {
+      let createdReservationId = ''
+
+      if (isSupabaseConfigured) {
+        const reservation = await createReservation({
+          area: reservationLocation,
+          date: String(formData.date),
+          time: String(formData.time),
+          guests: Number(formData.guests),
+          customerName: String(formData.name),
+          customerEmail: String(formData.email),
+          customerPhone: String(formData.phone),
+          note: String(formData.message || ''),
+        })
+
+        createdReservationId = reservation.id
+        setReservationReference(reservation.id.slice(0, 8).toUpperCase())
+      }
+
+      const payload = isTestMode
+        ? {
+          _subject: `Probereservierung für ${String(formData.date)}`,
+          _template: 'table',
+          _captcha: 'false',
+          _honey: String(formData.website || ''),
+          _url: window.location.href,
+          Ort:
+            formData.reservationLocation === 'outside'
+              ? 'Draußen'
+              : 'Drinnen',
+          Datum: String(formData.date),
+          Uhrzeit: `${String(formData.time)} Uhr`,
+          Name: String(formData.name),
+          email: String(formData.email),
+          Telefon: String(formData.phone),
+          Personenzahl: String(formData.guests),
+          Nachricht: String(formData.message || 'Keine Nachricht'),
+          Reservierungsnummer: createdReservationId || 'Noch nicht vergeben',
+        }
+        : { ...formData, reservationId: createdReservationId }
+
+      try {
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
+        })
+
+        if (!response.ok) {
+          throw new Error('Benachrichtigung fehlgeschlagen.')
+        }
+
+        const result = (await response.json()) as {
+          success?: boolean | string
+          message?: string
+        }
+        const wasSuccessful =
+          result.success === true || result.success === 'true'
+
+        if (
+          !createdReservationId
+          && isTestMode
+          && !wasSuccessful
+          && result.message?.toLowerCase().includes('activation')
+        ) {
+          setSubmissionStatus('activation')
+          return
+        }
+
+        if (!wasSuccessful && !createdReservationId) {
+          throw new Error('Die Reservierungsanfrage konnte nicht übertragen werden.')
+        }
+      } catch (notificationError) {
+        if (!createdReservationId) {
+          throw notificationError
+        }
+      }
+
+      form.reset()
+      setReservationLocation('inside')
+      setSelectedDate('')
+      setSelectedTime('')
+      setGuestCount('')
+      setAvailableTimes([])
+      setSubmissionStatus('success')
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : ''
+      setSubmissionMessage(
+        errorMessage.includes('slot_unavailable')
+          ? 'Dieser Termin wurde gerade vergeben. Bitte wählen Sie eine andere Uhrzeit.'
+          : 'Die Anfrage konnte gerade nicht gespeichert werden. Bitte versuchen Sie es erneut oder rufen Sie uns an.',
+      )
+      setSubmissionStatus('error')
+    }
+  }
+
   useEffect(() => {
     const revealElements = document.querySelectorAll<HTMLElement>('.reveal')
 
@@ -313,14 +546,56 @@ function App() {
           </div>
         </section>
 
+        {cancellationRequest && (
+          <section
+            id="stornieren"
+            className="section cancellation"
+            aria-labelledby="cancellation-title"
+          >
+            <article className="cancellation-card">
+              <p className="eyebrow">Reservierung</p>
+              <h2 id="cancellation-title">Reservierung stornieren</h2>
+              {cancellationStatus === 'success' ? (
+                <p className="form-status is-success" role="status">
+                  Ihre Reservierung wurde storniert. Der Tisch ist wieder
+                  freigegeben.
+                </p>
+              ) : (
+                <>
+                  <p>
+                    Wenn Sie den Termin nicht wahrnehmen können, können Sie die
+                    Reservierung hier freigeben.
+                  </p>
+                  <button
+                    className="btn btn-primary"
+                    type="button"
+                    onClick={handleCancellation}
+                    disabled={cancellationStatus === 'submitting'}
+                  >
+                    {cancellationStatus === 'submitting'
+                      ? 'Stornierung wird verarbeitet …'
+                      : 'Reservierung verbindlich stornieren'}
+                  </button>
+                  {cancellationStatus === 'error' && (
+                    <p className="form-status is-error" role="alert">
+                      Dieser Stornierungslink ist ungültig oder wurde bereits
+                      verwendet. Bitte rufen Sie uns bei Rückfragen an.
+                    </p>
+                  )}
+                </>
+              )}
+            </article>
+          </section>
+        )}
+
         <section id="kontakt" className="section contact" aria-labelledby="contact-title">
           <div className="contact-copy reveal">
             <p className="eyebrow">Kontakt / Reservierung</p>
             <h2 id="contact-title">Reservieren oder Veranstaltung anfragen</h2>
             <p>
-              Für Tischreservierungen sowie Buchungen der Diele am See rufen Sie
-              uns gern an. Aktuelle Infos und Speiseangebote finden Sie auch auf
-              Instagram.
+              Wählen Sie Ihren Wunschtermin aus und senden Sie die Anfrage
+              direkt an uns. Die Reservierung ist verbindlich, sobald wir den
+              Termin bestätigt haben.
             </p>
             <div className="contact-info">
               <p>
@@ -349,34 +624,244 @@ function App() {
 
           <form
             className="reservation-card reveal reveal-delay-1"
-            onSubmit={(event) => event.preventDefault()}
+            onSubmit={handleReservationSubmit}
+            onChange={() => setSubmissionStatus('idle')}
           >
-            <label htmlFor="name">Name</label>
-            <input id="name" name="name" type="text" placeholder="Ihr Name" />
+            {import.meta.env.DEV && (
+              <p className="test-mode-note">
+                Testmodus: Die Anfrage wird an hansbrandt6@web.de gesendet. Beim
+                ersten Versand muss der Empfang einmal per E-Mail aktiviert werden.
+              </p>
+            )}
 
-            <label htmlFor="guests">Personenzahl</label>
-            <input
-              id="guests"
-              name="guests"
-              type="number"
-              min="1"
-              placeholder="z. B. 4"
+            <div className="form-heading">
+              <p className="form-step">1. Reservierung auswählen</p>
+              <h3>Wo möchten Sie reservieren?</h3>
+            </div>
+
+            <fieldset className="reservation-types">
+              <legend className="sr-only">Ort der Reservierung</legend>
+              <label
+                className={`reservation-option ${reservationLocation === 'inside' ? 'is-selected' : ''}`}
+              >
+                <input
+                  type="radio"
+                  name="reservationLocation"
+                  value="inside"
+                  checked={reservationLocation === 'inside'}
+                  onChange={() => setReservationLocation('inside')}
+                />
+                <span>
+                  <strong>Drinnen</strong>
+                  <small>In unserer gemütlichen Gaststube</small>
+                </span>
+              </label>
+              <label
+                className={`reservation-option ${reservationLocation === 'outside' ? 'is-selected' : ''}`}
+              >
+                <input
+                  type="radio"
+                  name="reservationLocation"
+                  value="outside"
+                  checked={reservationLocation === 'outside'}
+                  onChange={() => setReservationLocation('outside')}
+                />
+                <span>
+                  <strong>Draußen</strong>
+                  <small>Auf unserer Terrasse oder im Garten</small>
+                </span>
+              </label>
+            </fieldset>
+
+            <div className="form-heading form-section-heading">
+              <p className="form-step">2. Wunschtermin wählen</p>
+            </div>
+
+            <ReservationCalendar
+              value={selectedDate}
+              onChange={(value) => {
+                setSelectedDate(value)
+                setSubmissionStatus('idle')
+              }}
             />
 
-            <label htmlFor="date">Wunschtermin</label>
-            <input id="date" name="date" type="date" />
+            <div className="form-field">
+              <label htmlFor="guests">
+                Personenzahl <span aria-hidden="true">*</span>
+              </label>
+              <input
+                id="guests"
+                name="guests"
+                type="number"
+                min="1"
+                max="60"
+                value={guestCount}
+                onChange={(event) => {
+                  setGuestCount(event.target.value)
+                  setSubmissionStatus('idle')
+                }}
+                placeholder="z. B. 4"
+                required
+              />
+            </div>
 
-            <label htmlFor="message">Nachricht</label>
+            <div className="form-field time-field">
+              <label htmlFor="time">
+                Gewünschte Uhrzeit <span aria-hidden="true">*</span>
+              </label>
+              <select
+                id="time"
+                name="time"
+                value={selectedTime}
+                onChange={(event) => {
+                  setSelectedTime(event.target.value)
+                  setSubmissionStatus('idle')
+                }}
+                disabled={
+                  isSupabaseConfigured
+                  && (!selectedDate
+                    || !guestCount
+                    || availabilityStatus === 'loading')
+                }
+                required
+              >
+                <option value="" disabled>
+                  {availabilityStatus === 'loading'
+                    ? 'Freie Zeiten werden geladen …'
+                    : 'Bitte auswählen'}
+                </option>
+                {cafeTimes.map((time) => (
+                  <option
+                    value={time}
+                    key={time}
+                    disabled={
+                      isSupabaseConfigured && !availableTimes.includes(time)
+                    }
+                  >
+                    {time} Uhr
+                    {isSupabaseConfigured
+                      && availabilityStatus === 'success'
+                      && !availableTimes.includes(time)
+                      ? ' – nicht verfügbar'
+                      : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <p className="availability-note">
+              {availabilityStatus === 'error'
+                ? 'Die Verfügbarkeit konnte gerade nicht geladen werden. Bitte versuchen Sie es erneut.'
+                : Number(guestCount) > 5
+                  ? 'Für Gruppen ab sechs Personen benötigen wir noch Regeln zum Zusammenstellen der Tische. Bitte rufen Sie uns bis dahin unter 0160 90647070 an.'
+                : availabilityStatus === 'success' && availableTimes.length === 0
+                  ? 'Für diese Auswahl ist aktuell keine Uhrzeit verfügbar.'
+                  : isSupabaseConfigured
+                    ? 'Es werden nur Uhrzeiten mit einem passenden freien Tisch angezeigt.'
+                    : 'Die Auswahl ist eine Anfrage. Wir bestätigen den Termin persönlich.'}
+            </p>
+
+            <div className="form-heading form-section-heading">
+              <p className="form-step">3. Kontaktdaten eintragen</p>
+              <p className="required-note">* Pflichtfelder</p>
+            </div>
+
+            <label htmlFor="name">
+              Vor- und Nachname <span aria-hidden="true">*</span>
+            </label>
+            <input
+              id="name"
+              name="name"
+              type="text"
+              autoComplete="name"
+              placeholder="Vor- und Nachname"
+              maxLength={120}
+              required
+            />
+
+            <label htmlFor="email">
+              E-Mail-Adresse <span aria-hidden="true">*</span>
+            </label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              autoComplete="email"
+              placeholder="name@beispiel.de"
+              maxLength={254}
+              required
+            />
+
+            <label htmlFor="phone">
+              Telefonnummer <span aria-hidden="true">*</span>
+            </label>
+            <input
+              id="phone"
+              name="phone"
+              type="tel"
+              autoComplete="tel"
+              placeholder="Für kurzfristige Rückfragen"
+              maxLength={40}
+              required
+            />
+
+            <label htmlFor="message">Nachricht (optional)</label>
             <textarea
               id="message"
               name="message"
               rows={4}
-              placeholder="Tischreservierung oder Anfrage für die Diele am See"
+              placeholder="Besondere Wünsche oder Hinweise"
+              maxLength={2000}
             />
 
-            <button className="btn btn-primary" type="submit">
-              Anfrage vorbereiten
+            <label className="consent-field">
+              <input type="checkbox" name="consent" value="accepted" required />
+              <span>
+                Ich bin damit einverstanden, dass meine Angaben zur Bearbeitung
+                der Reservierungsanfrage verwendet werden.
+              </span>
+            </label>
+
+            <div className="honeypot" aria-hidden="true">
+              <label htmlFor="website">Website</label>
+              <input id="website" name="website" type="text" tabIndex={-1} autoComplete="off" />
+            </div>
+
+            <button
+              className="btn btn-primary"
+              type="submit"
+              disabled={
+                !selectedDate
+                || !selectedTime
+                || submissionStatus === 'submitting'
+              }
+            >
+              {submissionStatus === 'submitting'
+                ? 'Anfrage wird übertragen …'
+                : 'Reservierungsanfrage senden'}
             </button>
+
+            {submissionStatus === 'success' && (
+              <p className="form-status is-success" role="status">
+                Vielen Dank! Ihre Reservierungsanfrage wurde gespeichert.
+                {reservationReference
+                  ? ` Ihre Reservierungsnummer lautet ${reservationReference}.`
+                  : ' Wir melden uns zur Bestätigung bei Ihnen.'}
+              </p>
+            )}
+            {submissionStatus === 'activation' && (
+              <p className="form-status is-info" role="status">
+                Die Aktivierungs-E-Mail wurde an hansbrandt6@web.de gesendet.
+                Bitte dort „Activate Form“ anklicken und die Reservierung danach
+                erneut absenden.
+              </p>
+            )}
+            {submissionStatus === 'error' && (
+              <p className="form-status is-error" role="alert">
+                {submissionMessage
+                  || 'Die Anfrage konnte gerade nicht gesendet werden. Bitte versuchen Sie es erneut oder rufen Sie uns unter 0160 90647070 an.'}
+              </p>
+            )}
           </form>
         </section>
 

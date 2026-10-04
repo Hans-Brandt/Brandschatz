@@ -1,13 +1,30 @@
 <!doctype html>
-<html lang="en">
+<html lang="de">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>brandschatz</title>
+    <title>Café Brandtschatz am Ankersee</title>
+    <meta
+      name="description"
+      content="Café Brandtschatz in Lankau/Anker: hausgemachte Torten und Kuchen, Diele am See für Veranstaltungen und regionale Hofatmosphäre."
+    />
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      if (window.location.protocol === 'file:') {
+        document.getElementById('root').innerHTML =
+          '<main style="min-height:100svh;display:grid;place-items:center;padding:24px;font-family:Manrope,Segoe UI,sans-serif;background:#efe7dc;color:#2c231c;text-align:center">' +
+          '<div style="max-width:720px;background:#fffaf2;border:1px solid rgba(133,99,67,.22);border-radius:18px;padding:24px;box-shadow:0 18px 40px rgba(72,55,40,.14)">' +
+          '<h1 style="margin:0 0 10px;font-size:28px;line-height:1.15">Die Seite wird lokal per Vite-Server geladen</h1>' +
+          '<p style="margin:0 0 8px">Bitte nicht per <code>file://</code> öffnen. Starte im Projektordner:</p>' +
+          '<p style="margin:0 0 8px"><code>npm run dev</code></p>' +
+          '<p style="margin:0">und öffne dann <code>http://localhost:5173</code>.</p>' +
+          '</div>' +
+          '</main>';
+      }
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
