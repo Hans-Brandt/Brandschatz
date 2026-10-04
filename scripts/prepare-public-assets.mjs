@@ -19,7 +19,7 @@ await sharp(`${projectRoot}/public/favicon.svg`)
   .png()
   .toFile(`${projectRoot}/public/apple-touch-icon.png`)
 
-await sharp(`${projectRoot}/src/assets/cafe/pfirsich-buttermilch.jpeg`)
+await sharp(`${projectRoot}/src/assets/cafe/ankersee-luftaufnahme.jpeg`)
   .rotate()
   .resize(1200, 630, { fit: 'cover', position: 'attention' })
   .jpeg({ quality: 86, mozjpeg: true })

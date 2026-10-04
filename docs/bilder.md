@@ -9,7 +9,7 @@ Die Innenaufnahme der Diele stammt aus `BIlder/diele/diele_03.jpg`.
 
 | Bereich | Bild |
 | --- | --- |
-| Titelbild | Pfirsich-Buttermilch-Torte |
+| Titelbild und Linkvorschau | Luftaufnahme des Ankersees und des Café Brandtschatz |
 | Torten und Kuchen | Stachelbeer-Baiser-Torte |
 | Deftiger Rettungsanker | Gaststube-Panorama |
 | Diele am See (Angebotskarte) | Fachwerk-Eingang |

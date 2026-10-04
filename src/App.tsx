@@ -202,9 +202,9 @@ function App() {
 
           <div className="hero-visual reveal is-visible reveal-delay-1">
             <img
-              {...peachCakeImage}
+              {...lakeAerialImage}
               sizes="(max-width: 680px) calc(100vw - 32px), (max-width: 930px) 90vw, 520px"
-              alt="Pfirsich-Buttermilch-Torte mit Kaffee im Garten des Café Brandtschatz"
+              alt="Luftaufnahme des Ankersees und des Café Brandtschatz"
               fetchPriority="high"
               decoding="async"
             />
