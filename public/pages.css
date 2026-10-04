@@ -1,0 +1,31 @@
+@import url('/fonts/fonts.css');
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: #efe7dc;
+  color: #5a4a3d;
+  font: 1rem/1.65 'Manrope', 'Segoe UI', sans-serif;
+}
+.page { max-width: 56rem; margin: 1.5rem auto; background: #fffaf2; border-radius: 1.5rem; }
+header, main, footer { padding: clamp(1.2rem, 4vw, 3rem); }
+header, footer { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+header { border-bottom: 1px solid #e3d7c6; }
+footer { border-top: 1px solid #e3d7c6; }
+nav { display: flex; flex-wrap: wrap; gap: 0.5rem 1.2rem; }
+a { color: #4f6b3f; text-underline-offset: 0.2em; overflow-wrap: anywhere; }
+header a, footer a { display: inline-flex; align-items: center; min-height: 44px; }
+a:focus-visible { outline: 2px solid #4f6b3f; outline-offset: 4px; }
+.brand { font-family: 'Fraunces', Georgia, serif; font-size: 1.2rem; text-decoration: none; color: #2c231c; }
+h1, h2 { font-family: 'Fraunces', Georgia, serif; line-height: 1.15; color: #2c231c; text-wrap: balance; }
+h1 { margin: 0 0 1.5rem; font-size: clamp(2rem, 6vw, 3rem); }
+h2 { margin-top: 2rem; font-size: 1.5rem; }
+address { font-style: normal; }
+.button { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0.7rem 1.2rem; border-radius: 2rem; background: #587244; color: white; text-decoration: none; }
+.skip-link { position: fixed; top: 1rem; left: 1rem; transform: translateY(-200%); padding: 0.8rem; background: #fffaf2; z-index: 2; }
+.skip-link:focus { transform: none; }
+main:focus { outline: none; }
+section { scroll-margin-top: 1rem; }
+@media (max-width: 680px) { .page { margin: 0; border-radius: 0; } }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }

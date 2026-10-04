@@ -1,73 +1,43 @@
-# React + TypeScript + Vite
+# Café Brandtschatz
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Website für das Café am Ankersee in Lankau/OT Anker. React, TypeScript und Vite
+werden lokal für die Entwicklung verwendet. Der Build liefert eine statische,
+auch ohne JavaScript lesbare Startseite sowie eigene Impressums-, Datenschutz-
+und Fehlerseiten für den bestehenden Webserver.
 
-Currently, two official plugins are available:
+## Entwicklung
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```sh
+npm ci
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Bilder erzeugen: `npm run images:optimize`. Produktion bauen: `npm run build`.
+Vorschau der fertigen Dateien: `npm run preview`.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Prüfung und Upload-Paket
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```sh
+npx playwright install chromium firefox webkit
+npm run release
 ```
+
+`npm run release` führt Lint, Build und 18 Browserprüfungen aus. Danach entstehen
+`release/brandtschatz-upload.zip`, Dateiprüfsummen und die Upload-Anleitung.
+Der Server benötigt nur die Inhalte des ZIP, einschließlich `.htaccess`.
+Das Verpacken nutzt `zip`, das auf macOS vorhanden ist.
+
+## Dokumentation
+
+- [Aktueller Status](docs/website-status.md)
+- [Veröffentlichung auf dem bestehenden Server](docs/veroeffentlichung.md)
+- [Noch zu bestätigende rechtliche Angaben](docs/rechtliches-offen.md)
+- [Inhalte und Bilder pflegen](docs/pflege.md)
+- [Bildauswahl und Optimierung](docs/bilder.md)
+
+Finale Werbetexte kommen später. Die Rechtstexte sind vorbereitet, müssen anhand
+der noch unbekannten Unternehmens- und Hostingangaben abschließend geprüft
+werden. Die endgültige Live-Prüfung erfolgt nach dem manuellen Upload.
+
+Die Online-Reservierung liegt auf `codex/reservierungen-pausiert` und bleibt
+zurückgestellt. Eine spätere Astro-Migration ist für diesen Stand nicht nötig.
