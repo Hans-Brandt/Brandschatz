@@ -49,6 +49,9 @@ verwendet. Nutzungsrechte und eventuell verlangte Fotografennennungen anhand
 der ursprünglichen Vereinbarungen prüfen. Der bisherige Internetauftritt
 nennt mehrere Urheber; deren Zuordnung zu den neuen Bilddateien ist unbekannt.
 
+Für das neue Herzsee-Titelbild ist der Bildnachweis aus der vom Nutzer gezeigten
+Mail bekannt: „sh-tourismus.de/MOCANOX“. Er ist direkt am Titelbild angegeben.
+
 ## Quellen zur Prüfung
 
 - [Anbieterpflichten, § 5 DDG](https://www.gesetze-im-internet.de/ddg/__5.html)

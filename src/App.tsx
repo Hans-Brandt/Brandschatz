@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import CafeMap from './CafeMap'
 import {
   natureParkPartnerImage,
+  heartLakeImage,
   lakeAerialImage,
   cafeExteriorImage,
   hallEntranceImage,
@@ -201,13 +202,16 @@ function App() {
           </div>
 
           <div className="hero-visual reveal is-visible reveal-delay-1">
-            <img
-              {...lakeAerialImage}
-              sizes="(max-width: 680px) calc(100vw - 32px), (max-width: 930px) 90vw, 520px"
-              alt="Luftaufnahme des Ankersees und des Café Brandtschatz"
-              fetchPriority="high"
-              decoding="async"
-            />
+            <figure className="hero-picture">
+              <img
+                {...heartLakeImage}
+                sizes="(max-width: 680px) calc(100vw - 32px), (max-width: 930px) 90vw, 520px"
+                alt="Luftaufnahme des herzförmigen Ankersees, umgeben von Wiesen und Bäumen"
+                fetchPriority="high"
+                decoding="async"
+              />
+              <figcaption className="hero-credit">Foto: © sh-tourismus.de/MOCANOX</figcaption>
+            </figure>
             <aside className="hero-note reveal is-visible reveal-delay-2">
               <p>Öffnungszeiten</p>
               <strong>Sa, So, Feiertage 12:00 - 18:00</strong>

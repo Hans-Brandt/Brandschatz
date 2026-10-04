@@ -6,6 +6,7 @@ import sharp from 'sharp'
 const projectRoot = fileURLToPath(new URL('..', import.meta.url))
 const outputDirectory = path.join(projectRoot, 'src/assets/cafe/optimized')
 const photos = [
+  ['heartLakeImage', 'ankersee-herzsee', 'src/assets/cafe/ankersee-herzsee.jpeg'],
   ['lakeAerialImage', 'ankersee-luftaufnahme', 'src/assets/cafe/ankersee-luftaufnahme.jpeg'],
   ['cafeExteriorImage', 'cafe-aussen', 'src/assets/cafe/cafe-aussen.jpeg'],
   ['hallEntranceImage', 'fachwerk-eingang', 'src/assets/cafe/fachwerk-eingang.jpeg'],

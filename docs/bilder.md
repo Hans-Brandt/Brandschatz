@@ -9,7 +9,7 @@ Die Innenaufnahme der Diele stammt aus `BIlder/diele/diele_03.jpg`.
 
 | Bereich | Bild |
 | --- | --- |
-| Titelbild und Linkvorschau | Luftaufnahme des Ankersees und des Café Brandtschatz |
+| Titelbild und Linkvorschau | Neue Luftaufnahme des herzförmigen Ankersees, sh-tourismus.de/MOCANOX |
 | Torten und Kuchen | Stachelbeer-Baiser-Torte |
 | Deftiger Rettungsanker | Gaststube-Panorama |
 | Diele am See (Angebotskarte) | Fachwerk-Eingang |
@@ -21,6 +21,12 @@ Die Innenaufnahme der Diele stammt aus `BIlder/diele/diele_03.jpg`.
 Die Gaststube beim herzhaften Angebot und das Tortenfoto bei den
 Manufakturprodukten bleiben auf ausdrücklichen Wunsch in der Auswahl.
 Eine Übersicht zeigt `bildauswahl.jpg` im selben Ordner.
+
+Das neue Titelbild liegt in `src/assets/cafe/ankersee-herzsee.jpeg` und stammt
+aus der am 4. Oktober 2026 übergebenen Datei. Der in der Mail genannte
+Bildnachweis „sh-tourismus.de/MOCANOX“ steht direkt unter dem Foto. Das gesamte
+Motiv wird ohne Beschnitt dargestellt, damit die Herzform erkennbar bleibt.
+Die Galerie verwendet weiterhin die bisherige Luftaufnahme.
 
 Die Galerie zeigt vier Motive: Kastanienbaum, Gaststube, Außenansicht mit dem
 Auto und Luftaufnahme. Die beiden weiteren Gartenfotos mit Seeblick wurden
